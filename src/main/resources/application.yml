@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: assetflow-market-data-service
+server:
+  port: 8083
+
+coin-gecko:
+  url: "https://api.coingecko.com/api/v3"
+
+resilience4j.circuitbreaker:
+  instances:
+    coinGeckoApi:
+      registerHealthIndicator: true
+      ringBufferSizeInClosedState: 5
+      ringBufferSizeInHalfOpenState: 3
+      waitDurationInOpenState: 10s
+      failureRateThreshold: 50
+      recordExceptions:
+        - org.springframework.web.reactive.function.client.WebClientRequestException
+        - org.springframework.web.client.HttpServerErrorException
+        - java.io.IOException
+        - java.util.concurrent.TimeoutException
+        - org.springframework.web.client.ResourceAccessException
+        - java.net.ConnectException
+        - java.lang.RuntimeException
+
+resilience4j.bulkhead:
+  instances:
+    coinGeckoApi:
+      maxWaitDuration: 10ms
+      maxConcurrentCalls: 20
+
+resilience4j.thread-pool-bulkhead:
+  instances:
+    coinGeckoApi:
+      maxThreadPoolSize: 1
+      coreThreadPoolSize: 1
+      queueCapacity: 1
+      keepAliveDuration: 20ms
+
+resilience4j.retry:
+  instances:
+    coinGeckoApi:
+      maxRetryAttempts: 5
+      waitDuration: 10000
+      retry-exceptions:
+        - org.springframework.web.reactive.function.client.WebClientRequestException
+        - java.util.concurrent.TimeoutException
+        - java.net.ConnectException
+        - java.lang.RuntimeException
+
+resilience4j.ratelimiter:
+  instances:
+    coinGeckoApi:
+      timeoutDuration: 1000ms
+      limitRefreshPeriod: 5000
+      limitForPeriod: 5
+
+resilience4j.timelimiter:
+  instances:
+    coinGeckoApi:
+      timeoutDuration: 2s
+      cancelRunningFuture: true
